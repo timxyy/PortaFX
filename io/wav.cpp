@@ -16,6 +16,18 @@ std::vector<uint8_t> read_file(const std::string& path) {
 
     std::vector<uint8_t> bytes(size); // Store the entire file into memory as chunks (bytes)
     file.read(reinterpret_cast<char*>(bytes.data()), size); // Reread the file as char*
-    if (!file) throw std::runtime_error("File could not be opened: " + path);
+    if (!file) throw std::runtime_error("File could not be read: " + path);
     return bytes;
+}
+
+uint16_t read_U16(const std::vector<uint8_t>& bytes, size_t pos) {
+    return (uint16_t)bytes[pos + 1] << 8 | (uint16_t)bytes[pos];
+}
+
+uint32_t read_U32(const std::vector<uint8_t>& bytes, size_t pos) {
+    uint32_t out = 0;
+    for (int i = 0; i < 4; ++i) {
+        out |= (uint32_t)bytes[pos + i] << (i * 8);
+    }
+    return out;
 }
