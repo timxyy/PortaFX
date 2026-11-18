@@ -11,6 +11,10 @@ add_library(dsp STATIC
 )
 target_include_directories(dsp PUBLIC dsp)
 target_compile_options(dsp PRIVATE -Wall -Wextra)
+# Parser
+add_library(io STATIC io/wav.cpp)
+target_include_directories(io PUBLIC io)
+
 
 # WAV in -> WAV out tool
 add_executable(offline_fx apps/offline_fx/main.cpp)

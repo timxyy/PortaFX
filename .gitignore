@@ -1,0 +1,6 @@
+# CMake build output (regenerate with cmake -S . -B build)
+build/
+build-*/
+
+# macOS Finder metadata
+.DS_Store
