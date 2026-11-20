@@ -4,3 +4,7 @@ build-*/
 
 # macOS Finder metadata
 .DS_Store
+
+# Test audio and helper scripts (kept local)
+testdata/
+tools/
