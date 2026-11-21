@@ -35,7 +35,13 @@ int main(int argc, char* argv[]) {
         std::printf("ch%zu min %.5f max %.5f\n", c, *lo, *hi);
     }
 
-    // TODO milestone 4: write wav.samples back out to argv[2]
+    try {
+        write_wav(argv[2], wav);
+    } catch (const std::exception& e) {
+        std::fprintf(stderr, "error: %s\n", e.what());
+        return 1;
+    }
+    std::printf("wrote %s\n", argv[2]);
 
     return 0;
 }

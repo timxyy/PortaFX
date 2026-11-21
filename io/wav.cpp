@@ -1,9 +1,12 @@
 #include "wav.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <stdexcept>
 
+// reading
 std::vector<uint8_t> read_file(const std::string& path) {
     // Open file as binary from the end
     std::ifstream file(path, std::ios::binary | std::ios::ate);
@@ -26,9 +29,7 @@ uint16_t read_U16(const std::vector<uint8_t>& bytes, size_t pos) {
 
 uint32_t read_U32(const std::vector<uint8_t>& bytes, size_t pos) {
     uint32_t out = 0;
-    for (int i = 0; i < 4; ++i) {
-        out |= (uint32_t)bytes[pos + i] << (i * 8);
-    }
+    for (int i = 0; i < 4; ++i) out |= (uint32_t)bytes[pos + i] << (i * 8);
     return out;
 }
 
@@ -91,4 +92,69 @@ WavFile parse_wav(const std::vector<uint8_t>& file) {
     }
 
     return wav;
+}
+
+
+// writing
+static void write_U16(std::vector<uint8_t>& out, uint16_t v) {
+    out.push_back(v & 0xFF);
+    out.push_back(v >> 8);
+}
+
+static void write_U32(std::vector<uint8_t>& out, uint32_t v) {
+    for (int i = 0; i < 4; ++i) out.push_back((v >> (i * 8)) & 0xFF);
+}
+
+static void write_ID(std::vector<uint8_t>& out, const char* id) {
+    out.insert(out.end(), id, id + 4);
+}
+
+static int16_t float_to_int16(float x) {
+    if (std::isnan(x)) return 0;
+    float v = std::round(x * 32768.0f);
+    return int16_t(std::clamp(v, -32768.0f, 32767.0f));
+}
+
+void write_wav(const std::string& path, const WavFile& wav) {
+    const auto& ch = wav.samples;
+    if (ch.empty()) throw std::runtime_error("No channels to write");
+    size_t frames = ch[0].size();
+    for (const auto& c : ch) if (c.size() != frames) throw std::runtime_error("Channels have different lengths");
+
+    uint16_t num_channels = uint16_t(ch.size());
+    uint16_t block_align = num_channels * 2;
+    uint32_t sample_rate = wav.info.sample_rate;
+    if (frames > (0xFFFFFFFFu - 36) / block_align) throw std::runtime_error("Too much audio for one WAV file");
+    uint32_t data_size = uint32_t(frames * block_align);
+
+    std::vector<uint8_t> out;
+    out.reserve(44 + data_size);
+
+    // RIFF header
+    write_ID(out, "RIFF");
+    write_U32(out, 36 + data_size);  // everything after this field: "WAVE" + fmt chunk (24) + data header (8) + samples
+    write_ID(out, "WAVE");
+
+    // fmt chunk
+    write_ID(out, "fmt ");
+    write_U32(out, 16);
+    write_U16(out, 1);                          // integer PCM
+    write_U16(out, num_channels);
+    write_U32(out, sample_rate);
+    write_U32(out, sample_rate * block_align);  // byte_rate
+    write_U16(out, block_align);
+    write_U16(out, 16);                         // bits per sample
+
+    // data chunk: interleave the channels again, frame by frame
+    write_ID(out, "data");
+    write_U32(out, data_size);
+    for (size_t f = 0; f < frames; ++f)
+        for (const auto& c : ch)
+            write_U16(out, uint16_t(float_to_int16(c[f])));
+    // 16-bit samples always give an even data size, so no padding byte is needed
+
+    std::ofstream file(path, std::ios::binary);
+    if (!file) throw std::runtime_error("File could not be created: " + path);
+    file.write(reinterpret_cast<const char*>(out.data()), out.size());
+    if (!file) throw std::runtime_error("File could not be written: " + path);
 }

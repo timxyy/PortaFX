@@ -39,3 +39,7 @@ uint32_t read_U32(const std::vector<uint8_t>& bytes, size_t pos);
 
 // Parses a whole WAV file held in memory. Throws std::runtime_error on bad or unsupported files.
 WavFile parse_wav(const std::vector<uint8_t>& file);
+
+// Writes samples as a 16-bit PCM WAV file. Uses only wav.info.sample_rate;
+// the channel count and length come from wav.samples. Throws on failure.
+void write_wav(const std::string& path, const WavFile& wav);
