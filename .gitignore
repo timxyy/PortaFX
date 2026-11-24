@@ -8,3 +8,6 @@ build-*/
 # Test audio and helper scripts (kept local)
 testdata/
 tools/
+
+#vscode properties
+.vscode/

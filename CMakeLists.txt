@@ -34,3 +34,24 @@ add_executable(offline_fx
 )
 target_link_libraries(offline_fx PRIVATE dsp io)
 target_compile_options(offline_fx PRIVATE -Wall -Wextra)
+
+# Real-time audio tool
+add_executable(live_fx
+    apps/live_fx/main.cpp
+)
+target_include_directories(live_fx PRIVATE ext dsp)
+target_link_libraries(live_fx PRIVATE dsp)
+
+if(APPLE)
+    target_link_libraries(live_fx PRIVATE
+        "-framework CoreAudio"
+        "-framework AudioToolbox"
+        "-framework CoreFoundation"
+    )
+elseif(UNIX)
+    target_link_libraries(live_fx PRIVATE pthread m dl asound)
+endif()
+
+target_compile_options(live_fx PRIVATE -Wall -Wextra)
+
+
