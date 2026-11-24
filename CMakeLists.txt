@@ -14,6 +14,9 @@ endif()
 # Effects library: pure DSP, no file or audio-device code
 add_library(dsp STATIC
     dsp/gain.cpp
+    dsp/tremolo.cpp
+    dsp/delay.cpp
+    dsp/chorus.cpp
 )
 target_include_directories(dsp PUBLIC dsp)
 target_compile_options(dsp PRIVATE -Wall -Wextra)
